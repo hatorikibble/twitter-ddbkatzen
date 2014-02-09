@@ -1,0 +1,14 @@
+{
+ "pidbase": "/Users/petermayr/tmp",
+ "name": "ddbKatzen",
+ "debug": 0,
+ "twitter_account": "ddbKatzen",
+ "twitter_consumer_key": "XXXX",
+ "twitter_consumer_secret": XXXX",
+ "twitter_access_token": "XXX",
+ "twitter_access_token_secret": "XXXX",
+  "ddb_api_key": "XXXX",
+ "ddb_api_url": "https://api.deutsche-digitale-bibliothek.de",
+ "url_shortener" : "http://is.gd/api.php?logstats=1&longurl=",
+ "sleep_time": 150
+}

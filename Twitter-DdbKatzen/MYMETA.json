@@ -1,0 +1,55 @@
+{
+   "abstract" : "The great new Twitter::EuropeanaBot!",
+   "author" : [
+      "Peter Mayr <at.peter.mayr@gmail.com>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "ExtUtils::MakeMaker version 6.6302, CPAN::Meta::Converter version 2.120921",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Twitter-EuropeanaBot",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "inc"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Config::Any::JSON" : "0",
+            "Date::Calc" : "0",
+            "File::Slurp" : "1",
+            "JSON" : "2.59",
+            "LWP::Simple" : "0",
+            "List::Util" : "0",
+            "Log::Log4perl" : "1.29",
+            "MooseX::Daemonize" : "0.15",
+            "MooseX::Getopt" : "0",
+            "MooseX::Log::Log4perl" : "0",
+            "MooseX::Runnable" : "0",
+            "Net::Twitter" : "4.0",
+            "Switch" : "0",
+            "Test::More" : "0",
+            "URI::Escape" : "0"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "version" : "1.4"
+}
