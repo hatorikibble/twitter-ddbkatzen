@@ -237,8 +237,9 @@ sub getDDBResults {
 
                 $self->log->debug( "Found item" . Dumper($result_ref) );
 
-                $return->{Title} = $result_ref->{item}->{'title'};
-
+                $return->{Title} = decode('iso-8859-1',$result_ref->{item}->{'title'});
+                $return->{Title} = encode('utf-8',$return->{Title});
+                
                 # get direct link to item
                 if (   ( defined( $result_ref->{item}->{'origin'} ) )
                     && ( $result_ref->{item}->{'origin'} =~ /href="(.*?)"/ ) )
@@ -382,7 +383,7 @@ sub writeCatTweet {
         "Und schon wieder ein Katzenbild aus der #ddb: '_TITLE_' aus _YEAR_: _URL_",
         "OK, Internet du magst Katzenbilder: '_TITLE_' aus _YEAR_: _URL_ #ddb",
         "Internet, Katze; #ddb, '_TITLE_' aus _YEAR_: _URL_",
-        "Ja die Deutsch Digitale Bibliothek hat auch Katzenbilder:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
+        "Ja die Deutsche Digitale Bibliothek hat auch Katzenbilder:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
         "Ganz etwas originelles:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
         "In der Deutschen Digitalen Bibliothek gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
         "<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
@@ -395,9 +396,9 @@ sub writeCatTweet {
     $self->log->debug("I'm gonna tweet about cats!");
 
     $result_ref = $self->getDDBResults(
-        Query => "katzen",
+        Query => $terms[0],
         Field => 'title',
-        Rows  => 25
+        Rows  => 250
     );
     if ( $result_ref->{Status} eq 'OK' ) {
         $self->post2Twitter(
