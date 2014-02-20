@@ -390,7 +390,7 @@ sub writeCatTweet {
 "<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
     );
     my @terms =
-      ( "katze", "katzen", "kaetzchen" );    # avoid those pesky umlauts..
+      ( "katze", "katzen", "hauskatze", "kaetzchen" );    # avoid those pesky umlauts..
 
     @messages = shuffle @messages;
     @terms    = shuffle @terms;
