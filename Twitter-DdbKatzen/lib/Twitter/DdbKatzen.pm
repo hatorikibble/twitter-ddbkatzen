@@ -6,7 +6,7 @@ Twitter::DdbKatzen - The great new Twitter::DdbKatzen!
 
 =head1 VERSION
 
-Version 1.0
+Version 1.1
 
 =head2 METHODS
 
@@ -30,7 +30,7 @@ use URI::Escape;
 
 use Data::Dumper;
 
-our $VERSION = '1.0';
+our $VERSION = '1.1';
 
 use Moose;
 
@@ -90,13 +90,13 @@ after start => sub {
         # what shall we do? let's roll the dice?
         $random = int( rand($range) );
 
-        # $random = 103;
+        # $random = 96;
 
         eval {
             switch ($random) {
 
-                case [ 0 .. 100 ]{ $self->writeCatTweet(); }
-
+                case [ 0 .. 94 ]{ $self->writeCatTweet(); }
+                case [ 95 .. 100 ]{ $self->writeRandomAnimalTweet(); }
             }
         };
         if ($@) {
@@ -237,9 +237,10 @@ sub getDDBResults {
 
                 $self->log->debug( "Found item" . Dumper($result_ref) );
 
-                $return->{Title} = decode('iso-8859-1',$result_ref->{item}->{'title'});
-                $return->{Title} = encode('utf-8',$return->{Title});
-                
+                $return->{Title} =
+                  decode( 'iso-8859-1', $result_ref->{item}->{'title'} );
+                $return->{Title} = encode( 'utf-8', $return->{Title} );
+
                 # get direct link to item
                 if (   ( defined( $result_ref->{item}->{'origin'} ) )
                     && ( $result_ref->{item}->{'origin'} =~ /href="(.*?)"/ ) )
@@ -380,20 +381,59 @@ sub writeCatTweet {
         "\#ddb eine Katze bitte! OK, '_TITLE_' aus _YEAR_: _URL_",
         "Oh! Katzen in der #ddb: '_TITLE_' aus _YEAR_ _URL_",
         "Katze gefällig? Aus der #ddb: '_TITLE_' aus _YEAR_: _URL_",
-        "Und schon wieder ein Katzenbild aus der #ddb: '_TITLE_' aus _YEAR_: _URL_",
+"Und schon wieder ein Katzenbild aus der #ddb: '_TITLE_' aus _YEAR_: _URL_",
         "OK, Internet du magst Katzenbilder: '_TITLE_' aus _YEAR_: _URL_ #ddb",
         "Internet, Katze; #ddb, '_TITLE_' aus _YEAR_: _URL_",
-        "Ja die Deutsche Digitale Bibliothek hat auch Katzenbilder:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
+"Ja die Deutsche Digitale Bibliothek hat auch Katzenbilder:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
         "Ganz etwas originelles:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
-        "In der Deutschen Digitalen Bibliothek gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
-        "<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
+"In der Deutschen Digitalen Bibliothek gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
+"<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
     );
-    my @terms = ( "katze", "katzen" );
+    my @terms =
+      ( "katze", "katzen", "kaetzchen" );    # avoid those pesky umlauts..
 
     @messages = shuffle @messages;
     @terms    = shuffle @terms;
 
     $self->log->debug("I'm gonna tweet about cats!");
+
+    $result_ref = $self->getDDBResults(
+        Query => $terms[0],
+        Field => 'title',
+        Rows  => 250
+    );
+    if ( $result_ref->{Status} eq 'OK' ) {
+        $self->post2Twitter(
+            Result  => $result_ref,
+            Message => $messages[0]
+        );
+
+        return;
+    }
+}
+
+=head2 writeRandomAnimalTweet()
+
+posts a picture of another animal
+
+=cut
+
+sub writeRandomAnimalTweet {
+    my $self       = shift;
+    my $result_ref = undef;
+    my @messages   = (
+        "Immer nur Katzen ist langweilig! '_TITLE_' aus _YEAR_: _URL_ \#ddb",
+        "\#ddb überrasche mich mal! OK, '_TITLE_' aus _YEAR_: _URL_",
+"In der Deutschen Digitalen Bibliothek keine Katze gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
+
+    );
+    my @terms = ( "hund", "maus", "eichhoernchen", "einhorn", "pony" )
+      ;    # avoid those pesky umlauts..
+
+    @messages = shuffle @messages;
+    @terms    = shuffle @terms;
+
+    $self->log->debug("I'm gonna tweet about $terms[0]!");
 
     $result_ref = $self->getDDBResults(
         Query => $terms[0],
