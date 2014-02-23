@@ -214,6 +214,11 @@ sub getDDBResults {
             @items = shuffle( @{ $result_ref->{results}->[0]->{docs} } );
 
             $self->log->info( "get item " . $items[0]->{id} );
+            $self->log->info( "thumbnail " . $items[0]->{thumbnail} );
+            $return->{Thumbnail} = $items[0]->{thumbnail};
+            $return->{ThumbnailData} =
+              get "https://www.deutsche-digitale-bibliothek.de"
+              . $return->{Thumbnail};
 
             # $self->log->debug( "Item is: " . Dumper( $items[0] ) );
 
@@ -265,7 +270,7 @@ sub getDDBResults {
                 # custom enrichment
                 $return->{Status} = "OK";
                 $return->{Query}  = $p{Query};
-                $self->log->debug( "Assembled result: " . Dumper($return) );
+                # $self->log->debug( "Assembled result: " . Dumper($return) );
 
                 return $return;
             }
@@ -352,7 +357,16 @@ sub post2Twitter {
         }
         else {
 
-            eval { $nt_result = $self->{Twitter}->update($status); };
+            eval {
+                $nt_result = $self->{Twitter}->update_with_media(
+                    $status,
+                    [
+                        undef,
+                        $p{Result}->{Thumbnail},
+                        Content => $p{Result}->{ThumbnailData}
+                    ]
+                );
+            };
             if ($@) {
                 $self->logger->error( "Error posting to "
                       . $self->twitter_account . ": "
@@ -390,7 +404,8 @@ sub writeCatTweet {
 "<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
     );
     my @terms =
-      ( "katze", "katzen", "hauskatze", "kaetzchen" );    # avoid those pesky umlauts..
+      ( "katze", "katzen", "hauskatze", "kaetzchen" )
+      ;    # avoid those pesky umlauts..
 
     @messages = shuffle @messages;
     @terms    = shuffle @terms;
