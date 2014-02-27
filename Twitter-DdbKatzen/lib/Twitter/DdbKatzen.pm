@@ -6,7 +6,7 @@ Twitter::DdbKatzen - The great new Twitter::DdbKatzen!
 
 =head1 VERSION
 
-Version 1.1
+Version 2.0
 
 =head2 METHODS
 
@@ -19,6 +19,8 @@ use namespace::autoclean;
 use FindBin qw($Bin);
 use Log::Log4perl qw( :levels);
 
+use DateTime;
+use DateTime::Format::SQLite;
 use Encode;
 use JSON;
 use List::Util qw( shuffle);
@@ -30,7 +32,10 @@ use URI::Escape;
 
 use Data::Dumper;
 
-our $VERSION = '1.1';
+use lib "../";
+use Twitter::DdbKatzen::Schema;
+
+our $VERSION = '2.0';
 
 use Moose;
 
@@ -43,20 +48,93 @@ subtype 'File', as 'Str',
   where { -e $_ },
   message { "Cannot find any file at $_" };
 
-has 'debug'                   => ( is => 'ro', isa => 'Bool', default  => 0 );
-has 'dont_close_all_files'    => ( is => 'ro', isa => 'Bool', default  => 1 );
-has 'name'                    => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'ddb_api_key'             => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'ddb_api_url'             => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'twitter_account'         => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'twitter_consumer_key'    => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'twitter_consumer_secret' => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'twitter_access_token'    => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'twitter_access_token_secret' =>
-  ( is => 'ro', isa => 'Str', required => 1 );
-has 'url_shortener' => ( is => 'ro', isa => 'Str', required => 1 );
+has 'debug' => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => "if set, tweets are just logged, not sent"
+);
+has 'dont_close_all_files' => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => "required for demon to run, no idea why"
+);
+has 'sqlite_db' => (
+    is            => 'ro',
+    isa           => 'File',
+    required      => 1,
+    documentation => "sqlite_db to store tweets, in order to avoid repetitions"
+);
+has 'name' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "name of the demon"
+);
+has 'ddb_api_key' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "API Key for 'Deutsche Digitale Bibliothek'"
+);
+has 'ddb_api_url' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "API Key for 'Deutsche Digitale Bibliothek'"
+);
+has 'twitter_account' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "Twitter Account to use"
+);
+has 'twitter_consumer_key' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "Twitter Authentication"
+);
+has 'twitter_consumer_secret' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "Twitter Authentication"
+);
+has 'twitter_access_token' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "Twitter Authentication"
+);
+has 'twitter_access_token_secret' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "Twitter Authentication"
+);
+has 'url_shortener' => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => "which url shortener to use"
+);
 
-has 'sleep_time' => ( is => 'ro', isa => 'Int', default => 2000 );
+has 'sleep_time' => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 2000,
+    documentation => "how many seconds to wait between tweets"
+);
+
+has 'duplicate_limit' => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 3,
+    required      => 0,
+    documentation => "how many days until a duplicate post is allowed"
+);
 
 no Moose::Util::TypeConstraints;
 
@@ -75,29 +153,25 @@ sub run {
 }
 
 after start => sub {
-    my $self   = shift;
-    my $range  = 100;
-    my $random = undef;
+    my $self = shift;
 
     return unless $self->is_daemon;
 
     $self->log->info("Daemon started..");
+
+    $self->{Schema} =
+      Twitter::DdbKatzen::Schema->connect( 'dbi:SQLite:' . $self->sqlite_db );
+    $self->{globalDuplicatesCount} = 0;
 
     $self->createTwitterObject();
 
     while (1) {
 
         # what shall we do? let's roll the dice?
-        $random = int( rand($range) );
-
-        # $random = 96;
 
         eval {
-            switch ($random) {
+            $self->rollTheDice();
 
-                case [ 0 .. 94 ]{ $self->writeCatTweet(); }
-                case [ 95 .. 100 ]{ $self->writeRandomAnimalTweet(); }
-            }
         };
         if ($@) {
             $self->log->error( "Oh problem!: " . $@ );
@@ -122,6 +196,29 @@ before stop => sub {
     my $self = shift;
     $self->log->info("Daemon ended..");
 };
+
+=head2 rollTheDice
+
+roll the dice and start corresponding action
+
+=cut
+
+sub rollTheDice {
+
+    my $self   = shift;
+    my $random = undef;
+    my $range  = 100;
+
+    $random = int( rand($range) );
+    $self->log->info( "The dice said: " . $random . "!" );
+
+    switch ($random) {
+
+        case [ 0 .. 94 ]{ $self->writeCatTweet(); }
+        case [ 95 .. 100 ]{ $self->writeRandomAnimalTweet(); }
+    }
+
+}
 
 =head2 createTwitterObject()
 
@@ -242,6 +339,8 @@ sub getDDBResults {
 
                 $self->log->debug( "Found item" . Dumper($result_ref) );
 
+                $return->{Identifier} = $result_ref->{item}->{'identifier'};
+
                 $return->{Title} =
                   decode( 'iso-8859-1', $result_ref->{item}->{'title'} );
                 $return->{Title} = encode( 'utf-8', $return->{Title} );
@@ -270,6 +369,7 @@ sub getDDBResults {
                 # custom enrichment
                 $return->{Status} = "OK";
                 $return->{Query}  = $p{Query};
+
                 # $self->log->debug( "Assembled result: " . Dumper($return) );
 
                 return $return;
@@ -317,6 +417,7 @@ sub post2Twitter {
     my $nt_result = undef;
     my $short_url = undef;
     my $status    = undef;
+    my $timestamp = DateTime::Format::SQLite->format_datetime( DateTime->now );
 
     $status = $p{Message};
 
@@ -374,6 +475,16 @@ sub post2Twitter {
                       . "!" );
 
             }
+            else {
+                # write to database
+                $self->{Schema}->resultset('Tweet')->create(
+                    {
+                        ddb_identifier => $p{Result}->{Identifier},
+                        tweet_date     => $timestamp
+                    }
+                );
+
+            }
         }
 
         # $self->log->debug( Dumper($nt_result) );
@@ -417,13 +528,31 @@ sub writeCatTweet {
         Field => 'title',
         Rows  => 250
     );
-    if ( $result_ref->{Status} eq 'OK' ) {
+
+    # not very elegant but simple
+    if (
+        (
+            $self->checkForDuplicate(
+                Identifier => $result_ref->{Identifier}
+            ) eq 'OK'
+        )
+
+        && ( $result_ref->{Status} eq 'OK' )
+      )
+    {
         $self->post2Twitter(
             Result  => $result_ref,
             Message => $messages[0]
         );
 
         return;
+    }
+    else {
+
+        # start again
+        $self->rollTheDice();
+        return;
+
     }
 }
 
@@ -442,7 +571,7 @@ sub writeRandomAnimalTweet {
 "In der Deutschen Digitalen Bibliothek keine Katze gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
 
     );
-    my @terms = ( "hund", "maus", "eichhoernchen", "einhorn", "pony" )
+    my @terms = ( "hund", "maus", "eichhoernchen", "einhorn", "pony", "hamster" )
       ;    # avoid those pesky umlauts..
 
     @messages = shuffle @messages;
@@ -455,7 +584,18 @@ sub writeRandomAnimalTweet {
         Field => 'title',
         Rows  => 250
     );
-    if ( $result_ref->{Status} eq 'OK' ) {
+
+    # not very elegant but simple
+    if (
+        (
+            $self->checkForDuplicate(
+                Identifier => $result_ref->{Identifier}
+            ) eq 'OK'
+        )
+
+        && ( $result_ref->{Status} eq 'OK' )
+      )
+    {
         $self->post2Twitter(
             Result  => $result_ref,
             Message => $messages[0]
@@ -463,6 +603,81 @@ sub writeRandomAnimalTweet {
 
         return;
     }
+    else {
+
+        # start again
+        $self->rollTheDice();
+        return;
+
+    }
+
+}
+
+=head2 checkForDuplicate(Identifier=>'oai:dafadsfdsfdsf')
+
+checks C<sqlite_db> if the specified image has already been posted
+within C<duplicate_period>
+
+returns C<OK> or the day of the last tweet 
+
+=cut
+
+sub checkForDuplicate {
+    my ( $self, %p ) = @_;
+    my $return = undef;
+    my $check_date = DateTime->now->subtract( days => $self->duplicate_limit );
+
+    my $resultSet = undef;
+    my $row       = undef;
+
+    $self->log->debug( "Checking "
+          . $p{Identifier}
+          . " with limit "
+          . $self->duplicate_limit
+          . "!" );
+
+    $resultSet = $self->{Schema}->resultset('Tweet')->search(
+        {
+            '-and' => [
+                'ddb_identifier' => $p{Identifier},
+                'tweet_date'     => {
+                    '>' => DateTime::Format::SQLite->format_datetime($check_date)
+                  }
+
+            ]
+        },
+        { 'order_by' => { -desc => 'tweet_date' } }
+    );
+
+    if ( $resultSet->count == 0 ) {
+        $self->{globalDuplicatesCount}--;
+        return "OK";
+        
+    }
+    else {
+
+        $self->{globalDuplicatesCount}++;
+
+        #calm down, if too many duplicates in a row
+        if ( $self->{globalDuplicatesCount} > 30 ) {
+            $self->{globalDuplicatesCount};
+            $self->log->warn("Wow! Too many duplicates.. I'm taking a nap...");
+
+            sleep( $self->sleep_time );
+        }
+
+        # duplicates found, log the first and return
+        $row = $resultSet->next;
+
+        $self->log->info( $resultSet->count
+              . " Duplicates found, "
+              . $row->ddb_identifier
+              . " already tweeted on "
+              . $row->tweet_date );
+
+        return $row->tweet_date;
+    }
+
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -512,4 +727,3 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-## Please see file perltidy.ERR
