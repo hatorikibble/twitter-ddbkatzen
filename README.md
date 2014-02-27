@@ -3,7 +3,7 @@ twitter-ddbkatzen
 
 Ein TwitterBot der die [Deutsche Digitale Bibliothek] (https://www.deutsche-digitale-bibliothek.de) nach Katzenbildern durchsucht
 
-usage: ddbkatzen [-?fh] [long options...]
+    usage: ddbkatzen [-?fh] [long options...]
 	--pidbase                          the base for our pid (default:
 	                                   /var/run)
 	--progname                         the name of the daemon
