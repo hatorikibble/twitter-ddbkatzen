@@ -660,7 +660,7 @@ sub checkForDuplicate {
 
         #calm down, if too many duplicates in a row
         if ( $self->{globalDuplicatesCount} > 30 ) {
-            $self->{globalDuplicatesCount};
+            $self->{globalDuplicatesCount} = 0;
             $self->log->warn("Wow! Too many duplicates.. I'm taking a nap...");
 
             sleep( $self->sleep_time );
