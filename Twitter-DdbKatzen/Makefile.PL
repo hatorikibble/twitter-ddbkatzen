@@ -4,10 +4,10 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME          => 'Twitter::EuropeanaBot',
+    NAME          => 'Twitter::DdbKatzen',
     AUTHOR        => q{Peter Mayr <at.peter.mayr@gmail.com>},
-    VERSION_FROM  => 'lib/Twitter/EuropeanaBot.pm',
-    ABSTRACT_FROM => 'lib/Twitter/EuropeanaBot.pm',
+    VERSION_FROM  => 'lib/Twitter/DdbKatzen.pm',
+    ABSTRACT_FROM => 'lib/Twitter/DdbKatzen.pm',
     ( $ExtUtils::MakeMaker::VERSION >= 6.3002
         ? ( 'LICENSE' => 'perl' )
         : () ),
