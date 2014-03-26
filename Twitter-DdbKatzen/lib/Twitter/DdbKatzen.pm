@@ -421,7 +421,8 @@ sub post2Twitter {
 
     $status = $p{Message};
 
-    $short_url = get( $self->url_shortener . $p{Result}->{Url} );
+    $short_url =
+      get( $self->url_shortener . uri_escape_utf8( $p{Result}->{Url} ) );
 
     $status =~ s/_TITLE_/$p{Result}->{Title}/;
     $status =~ s/_URL_/$short_url/;
@@ -571,7 +572,8 @@ sub writeRandomAnimalTweet {
 "In der Deutschen Digitalen Bibliothek keine Katze gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
 
     );
-    my @terms = ( "hund", "maus", "eichhoernchen", "einhorn", "pony", "hamster" )
+    my @terms =
+      ( "hund", "maus", "eichhoernchen", "einhorn", "pony", "hamster" )
       ;    # avoid those pesky umlauts..
 
     @messages = shuffle @messages;
@@ -641,7 +643,8 @@ sub checkForDuplicate {
             '-and' => [
                 'ddb_identifier' => $p{Identifier},
                 'tweet_date'     => {
-                    '>' => DateTime::Format::SQLite->format_datetime($check_date)
+                    '>' =>
+                      DateTime::Format::SQLite->format_datetime($check_date)
                   }
 
             ]
@@ -652,7 +655,7 @@ sub checkForDuplicate {
     if ( $resultSet->count == 0 ) {
         $self->{globalDuplicatesCount}--;
         return "OK";
-        
+
     }
     else {
 
