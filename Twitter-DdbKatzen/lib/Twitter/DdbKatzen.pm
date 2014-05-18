@@ -352,20 +352,6 @@ sub getDDBResults {
                     $return->{Url} = $1;
                 }
 
-                # parse more fields
-                foreach
-                  my $field ( @{ $result_ref->{item}->{fields}->{field} } )
-                {
-
-                    switch ( $field->{name} ) {
-
-                        case 'Geschaffen (wann)' {
-                            $return->{Date} = $field->{value};
-                        }
-
-                    }
-                }
-
                 # custom enrichment
                 $return->{Status} = "OK";
                 $return->{Query}  = $p{Query};
@@ -426,7 +412,6 @@ sub shortenUrl {
     }
 }
 
-
 =head2 post2Twitter(Message=>'So.. you like cats? Here's a picture from #europeana: _URL_', Result=>$result)
 
 posts the result to the twitter account specified by C<$self->twitter_account>
@@ -437,7 +422,7 @@ Parameters
 
 =item  * Message
 
-message to post, you can use the following placeholders C<_TITLE_>, C<_YEAR_>,
+message to post, you can use the following placeholders C<_TITLE_>,
 C<_URL_>
 
 =item  * Result
@@ -457,19 +442,10 @@ sub post2Twitter {
 
     $status = $p{Message};
 
-    $short_url = $self->shortenUrl(Url=> $p{Result}->{Url} );
+    $short_url = $self->shortenUrl( Url => $p{Result}->{Url} );
 
     $status =~ s/_TITLE_/$p{Result}->{Title}/;
     $status =~ s/_URL_/$short_url/;
-
-    if ( defined( $p{Result}->{Date} ) ) {
-        $status =~ s/_YEAR_/$p{Result}->{Date}/;
-
-    }
-    else {
-        $status =~ s/ (aus) _YEAR_//;
-
-    }
 
     if ( defined( $p{Result}->{Title} ) ) {
         $status =~ s/_TITLE_/$p{Result}->{Title}/;
@@ -538,17 +514,17 @@ sub writeCatTweet {
     my $self       = shift;
     my $result_ref = undef;
     my @messages   = (
-        "Katzenbild aus der \#ddb! '_TITLE_' aus _YEAR_: _URL_",
-        "\#ddb eine Katze bitte! OK, '_TITLE_' aus _YEAR_: _URL_",
-        "Oh! Katzen in der #ddb: '_TITLE_' aus _YEAR_ _URL_",
-        "Katze gefällig? Aus der #ddb: '_TITLE_' aus _YEAR_: _URL_",
-"Und schon wieder ein Katzenbild aus der #ddb: '_TITLE_' aus _YEAR_: _URL_",
-        "OK, Internet du magst Katzenbilder: '_TITLE_' aus _YEAR_: _URL_ #ddb",
-        "Internet, Katze; #ddb, '_TITLE_' aus _YEAR_: _URL_",
-"Ja die Deutsche Digitale Bibliothek hat auch Katzenbilder:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
-        "Ganz etwas originelles:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
-"In der Deutschen Digitalen Bibliothek gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
-"<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_' aus _YEAR_: _URL_ #ddb",
+        "Katzenbild aus der \#ddb! '_TITLE_': _URL_",
+        "\#ddb eine Katze bitte! OK, '_TITLE_': _URL_",
+        "Oh! Katzen in der #ddb: '_TITLE_' _URL_",
+        "Katze gefällig? Aus der #ddb: '_TITLE_': _URL_",
+        "Und schon wieder ein Katzenbild aus der #ddb: '_TITLE_': _URL_",
+        "OK, Internet du magst Katzenbilder: '_TITLE_': _URL_ #ddb",
+        "Internet, Katze; #ddb, '_TITLE_': _URL_",
+"Ja die Deutsche Digitale Bibliothek hat auch Katzenbilder:  '_TITLE_': _URL_ #ddb",
+        "Ganz etwas originelles:  '_TITLE_': _URL_ #ddb",
+        "In der Deutschen Digitalen Bibliothek gefunden: '_TITLE_': _URL_ #ddb",
+        "<Geistreichen Tweet zu Katzen einfügen>:  '_TITLE_': _URL_ #ddb",
     );
     my @terms =
       ( "katze", "katzen", "hauskatze", "kaetzchen" )
@@ -602,9 +578,9 @@ sub writeRandomAnimalTweet {
     my $self       = shift;
     my $result_ref = undef;
     my @messages   = (
-        "Immer nur Katzen ist langweilig! '_TITLE_' aus _YEAR_: _URL_ \#ddb",
-        "\#ddb überrasche mich mal! OK, '_TITLE_' aus _YEAR_: _URL_",
-"In der Deutschen Digitalen Bibliothek keine Katze gefunden: '_TITLE_' aus _YEAR_: _URL_ #ddb",
+        "Immer nur Katzen ist langweilig! '_TITLE_': _URL_ \#ddb",
+        "\#ddb überrasche mich mal! OK, '_TITLE_': _URL_",
+"In der Deutschen Digitalen Bibliothek keine Katze gefunden: '_TITLE_': _URL_ #ddb",
 
     );
     my @terms =
