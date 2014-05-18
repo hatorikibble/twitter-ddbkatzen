@@ -6,7 +6,7 @@ Twitter::DdbKatzen - The great new Twitter::DdbKatzen!
 
 =head1 VERSION
 
-Version 2.0
+Version 2.1
 
 =head2 METHODS
 
@@ -35,7 +35,7 @@ use Data::Dumper;
 use lib "../";
 use Twitter::DdbKatzen::Schema;
 
-our $VERSION = '2.0';
+our $VERSION = '2.1';
 
 use Moose;
 
@@ -391,6 +391,42 @@ sub getDDBResults {
 
 }
 
+=head2 shortenUrl(Url=>'http://longurl.com')
+
+returns a shortened URL, or - if anything goes wrong -
+the original one
+
+=cut
+
+sub shortenUrl {
+    my ( $self, %p ) = @_;
+    my $short_url;
+
+    eval {
+        $short_url = get( $self->url_shortener . uri_escape_utf8( $p{Url} ) );
+    };
+
+    if ($@) {
+        $self->logger->error(
+            "Problem shortening URL: " . $p{Url} . " : " . $@ . "!" );
+        return $p{Url};
+
+    }
+    elsif ( defined($short_url) && ( $short_url =~ /^http/ ) ) {
+        $self->logger->debug( "URL " . $p{Url} . " became " . $short_url );
+        return $short_url;
+    }
+    else {    # Fallback
+        $self->logger->error( "Shortend Url"
+              . $short_url
+              . " looks weird, falling back to "
+              . $p{Url} );
+        return $p{Url}
+
+    }
+}
+
+
 =head2 post2Twitter(Message=>'So.. you like cats? Here's a picture from #europeana: _URL_', Result=>$result)
 
 posts the result to the twitter account specified by C<$self->twitter_account>
@@ -421,8 +457,7 @@ sub post2Twitter {
 
     $status = $p{Message};
 
-    $short_url =
-      get( $self->url_shortener . uri_escape_utf8( $p{Result}->{Url} ) );
+    $short_url = $self->shortenUrl(Url=> $p{Result}->{Url} );
 
     $status =~ s/_TITLE_/$p{Result}->{Title}/;
     $status =~ s/_URL_/$short_url/;
