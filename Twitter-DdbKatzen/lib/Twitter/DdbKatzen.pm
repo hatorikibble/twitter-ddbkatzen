@@ -346,10 +346,15 @@ sub getDDBResults {
                 $return->{Title} = encode( 'utf-8', $return->{Title} );
 
                 # get direct link to item
-                if (   ( defined( $result_ref->{item}->{'origin'} ) )
-                    && ( $result_ref->{item}->{'origin'} =~ /href="(.*?)"/ ) )
-                {
-                    $return->{Url} = $1;
+                if ( defined( $result_ref->{item}->{'origin'} ) ) {
+
+                    if ( $result_ref->{item}->{'origin'} =~ /href="(.*?)"/ ) {
+                        $return->{Url} = $1;
+                    }
+                    elsif ( $result_ref->{item}->{'origin'} =~ /^http/ ) {
+                        $return->{Url} = $result_ref->{item}->{'origin'};
+
+                    }
                 }
 
                 # custom enrichment
