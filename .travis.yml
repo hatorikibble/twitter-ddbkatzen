@@ -4,7 +4,7 @@ perl:
   - "5.18"
 install:
 # Deal with dependencies
-- cpanm --installdeps ./Twitter-DdbKatzen
+- cpanm --notest --installdeps ./Twitter-DdbKatzen
 script:
 - cd Twitter-DdbKatzen
 - perl Makefile.PL
