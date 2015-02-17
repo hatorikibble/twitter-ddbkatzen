@@ -3,7 +3,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-    use_ok( 'Twitter::EuropeanaBot' ) || print "Bail out!\n";
+    use_ok( 'Twitter::DdbKatzen' ) || print "Bail out!\n";
 }
 
-diag( "Testing Twitter::EuropeanaBot $Twitter::EuropeanaBot::VERSION, Perl $], $^X" );
+diag( "Testing Twitter::DdbKatzen $Twitter::DdbKatzen::VERSION, Perl $], $^X" );
