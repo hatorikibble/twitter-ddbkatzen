@@ -2,11 +2,11 @@ package Twitter::DdbKatzen;
 
 =head1 NAME
 
-Twitter::DdbKatzen - The great new Twitter::DdbKatzen!
+Twitter::DdbKatzen - a Twitter bot to post cat pictures from the Deutsche Digitale Bibliothek
 
 =head1 VERSION
 
-Version 2.1
+Version 2.11
 
 =head2 METHODS
 
@@ -35,7 +35,7 @@ use Data::Dumper;
 use lib "../";
 use Twitter::DdbKatzen::Schema;
 
-our $VERSION = '2.1';
+our $VERSION = '2.11';
 
 use Moose;
 
@@ -261,7 +261,7 @@ which index to use
 
 type of result, defaults to  I<mediatype_002> (image)
 
-=items * Rows
+=item * Rows
 
 how many rows should be returned, defaults to C<1>
 
