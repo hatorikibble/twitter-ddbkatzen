@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/hatorikibble/twitter-ddbkatzen.svg?branch=master)](https://travis-ci.org/hatorikibble/twitter-ddbkatzen)
+
 twitter-ddbkatzen
 ====================
 
